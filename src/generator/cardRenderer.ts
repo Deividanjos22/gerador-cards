@@ -99,7 +99,7 @@ function drawFeedProducts(
 
   const validity = formatCampaignValidity(card.campaign.dataInicio, card.campaign.dataFim);
   if (validity) {
-    drawValidityWithinBox(ctx, validity, { x: 430, y: 900, width: 180, height: 38 }, 14);
+    drawValidityWithinBox(ctx, validity, { x: 430, y: 900, width: 180, height: 38 }, 14, true);
   }
 }
 
@@ -141,6 +141,7 @@ function drawValidityWithinBox(
   validity: string,
   box: { x: number; y: number; width: number; height: number },
   fontSize: number,
+  forceTwoLines = false,
 ): void {
   ctx.save();
   ctx.beginPath();
@@ -150,7 +151,17 @@ function drawValidityWithinBox(
   ctx.font = `700 ${fontSize}px Poppins, sans-serif`;
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
-  ctx.fillText(fitText(ctx, validity, box.width - 8), box.x + box.width / 2, box.y + box.height / 2);
+  const lines = fitTextLines(ctx, validity, box.width - 8, forceTwoLines ? 2 : 1);
+  if (forceTwoLines && lines.length === 1) {
+    const words = validity.trim().split(/\s+/);
+    const splitAt = Math.ceil(words.length / 2);
+    lines.splice(0, 1, words.slice(0, splitAt).join(' '), words.slice(splitAt).join(' '));
+  }
+  const lineHeight = fontSize + 2;
+  const firstLineY = box.y + box.height / 2 - ((lines.length - 1) * lineHeight) / 2;
+  lines.forEach((line, index) => {
+    ctx.fillText(line, box.x + box.width / 2, firstLineY + index * lineHeight);
+  });
   ctx.restore();
 }
 
