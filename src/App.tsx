@@ -261,7 +261,15 @@ export default function App() {
       const box = cardFormat === 'feed'
         ? feedProductLabelBox(Math.floor(i / 3), i % 3)
         : productImageBox(Math.floor(i / 3), i % 3);
-      return Boolean(box && x >= box.x && x <= box.x + box.width && y >= box.y && y <= box.y + box.height);
+      const labelHeight = cardFormat === 'feed' ? box?.height : 70;
+      return Boolean(
+        box &&
+          labelHeight &&
+          x >= box.x &&
+          x <= box.x + box.width &&
+          y >= box.y &&
+          y <= box.y + labelHeight,
+      );
     });
     if (index >= 0) {
       const product = selectedProducts[index];
