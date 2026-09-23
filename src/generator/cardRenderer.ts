@@ -102,7 +102,7 @@ function drawFeedProducts(
     ctx.fillStyle = '#ffffff';
     ctx.font = '700 14px Poppins, sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillText(validity, 520, 901);
+    ctx.fillText(validity, 520, 920);
   }
 }
 
