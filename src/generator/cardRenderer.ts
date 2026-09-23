@@ -169,7 +169,7 @@ function drawCampaignValidity(ctx: CanvasRenderingContext2D, campaign: Campaign)
   const validity = formatCampaignValidity(campaign.dataInicio, campaign.dataFim);
   if (!validity) return;
 
-  drawValidityWithinBox(ctx, validity, { x: 500, y: 1572, width: 250, height: 48 }, 22);
+  drawValidityWithinBox(ctx, validity, { x: 500, y: 1572, width: 250, height: 48 }, 22, true);
 }
 
 function formatCampaignValidity(startDate: string, endDate: string): string {
