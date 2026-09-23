@@ -1,0 +1,63 @@
+:root {
+  --bg: #f4f0e9;
+  --surface: #ffffff;
+  --surface-2: #fbfaf6;
+  --border: #e4ddd1;
+  --text: #2b2419;
+  --heading: #1d1810;
+  --muted: #8a8171;
+  --primary: #c1272d;
+  --primary-dark: #9e1f24;
+  --on-primary: #ffffff;
+  --accent: #ffd200;
+  --on-accent: #2a1d00;
+  --danger: #b3261e;
+  --focus: rgba(193, 39, 45, 0.35);
+  --shadow: 0 12px 32px rgba(60, 48, 20, 0.1);
+  --radius: 14px;
+  --sans: 'Poppins', system-ui, 'Segoe UI', Roboto, sans-serif;
+
+  color: var(--text);
+  background: var(--bg);
+  font-family: var(--sans);
+  font-size: 16px;
+  line-height: 1.5;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100svh;
+}
+
+h1,
+h2,
+h3,
+p,
+ul {
+  margin: 0;
+}
+
+ul {
+  padding: 0;
+  list-style: none;
+}
+
+button,
+input,
+select {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+}
