@@ -99,7 +99,7 @@ function drawFeedProducts(
 
   const validity = formatCampaignValidity(card.campaign.dataInicio, card.campaign.dataFim);
   if (validity) {
-    drawValidityWithinBox(ctx, validity, { x: 430, y: 888, width: 180, height: 38 }, 14);
+    drawValidityWithinBox(ctx, validity, { x: 430, y: 900, width: 180, height: 38 }, 14);
   }
 }
 
