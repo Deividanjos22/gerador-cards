@@ -12,6 +12,7 @@ import {
 } from './template';
 import { FEED_TEMPLATE, getTemplate } from './templates';
 import { getCardFormat, type CardFormat } from './format';
+import { feedProductImageArea, feedProductLabelBox, feedProductBox } from './feedTemplate';
 
 export interface CardData {
   campaign: Campaign;
@@ -73,9 +74,6 @@ async function imagesForProducts(products: Product[]): Promise<(HTMLImageElement
   );
 }
 
-const FEED_COLUMNS = [34, 280, 526];
-const FEED_ROWS = [367, 535, 703];
-
 function drawFeedProducts(
   ctx: CanvasRenderingContext2D,
   card: CardData,
@@ -88,21 +86,15 @@ function drawFeedProducts(
   products.forEach((product, index) => {
     const row = Math.floor(index / 3);
     const column = index % 3;
-    const x = FEED_COLUMNS[column];
-    const y = FEED_ROWS[row];
-    if (x === undefined || y === undefined) return;
-
-    const imageArea = { x: x + 12, y: y + 34, width: 184, height: 78 };
+    const box = feedProductBox(row, column);
+    const imageArea = feedProductImageArea(row, column);
+    const labelBox = feedProductLabelBox(row, column);
+    if (!box || !imageArea || !labelBox) return;
     if (images[index]) drawProductImage(ctx, images[index]!, imageArea);
 
     const displayName = card.campaign.nomesProdutos?.[product.id]?.trim() || product.nome;
-    drawFeedLabel(ctx, [displayName, product.unidade].filter(Boolean).join(' · '), {
-      x: x + 10,
-      y: y + 8,
-      width: 188,
-      height: 25,
-    });
-    drawFeedPrice(ctx, product, store, priceType, x + 88, y + 145);
+    drawFeedLabel(ctx, [displayName, product.unidade].filter(Boolean).join(' · '), labelBox);
+    drawFeedPrice(ctx, product, store, priceType, box.x + 88, box.y + 145);
   });
 
   const validity = formatCampaignValidity(card.campaign.dataInicio, card.campaign.dataFim);

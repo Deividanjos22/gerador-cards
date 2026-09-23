@@ -17,6 +17,12 @@ import { ImportPanel } from './ui/import/ImportPanel';
 import { formatPrice, formatDatePtBr, slugify } from './utils/format';
 import { fileToDataUrl } from './utils/image';
 import { CARD_FORMATS, type CardFormat, getCardFormat } from './generator/format';
+import {
+  FEED_TEMPLATE_HEIGHT,
+  FEED_TEMPLATE_WIDTH,
+  feedProductImageArea,
+  feedProductLabelBox,
+} from './generator/feedTemplate';
 
 initializeData();
 
@@ -245,13 +251,17 @@ export default function App() {
   }
 
   function handleCanvasClick(e: React.MouseEvent<HTMLCanvasElement>) {
-    if (!selectedCampaign || cardFormat === 'feed') return;
+    if (!selectedCampaign) return;
     const rect = e.currentTarget.getBoundingClientRect();
-    const x = ((e.clientX - rect.left) / rect.width) * POSTER_WIDTH;
-    const y = ((e.clientY - rect.top) / rect.height) * POSTER_HEIGHT;
+    const canvasWidth = cardFormat === 'feed' ? FEED_TEMPLATE_WIDTH : POSTER_WIDTH;
+    const canvasHeight = cardFormat === 'feed' ? FEED_TEMPLATE_HEIGHT : POSTER_HEIGHT;
+    const x = ((e.clientX - rect.left) / rect.width) * canvasWidth;
+    const y = ((e.clientY - rect.top) / rect.height) * canvasHeight;
     const index = selectedProducts.findIndex((_, i) => {
-      const box = productImageBox(Math.floor(i / 3), i % 3);
-      return Boolean(box && x >= box.x && x <= box.x + box.width && y >= box.y && y <= box.y + 70);
+      const box = cardFormat === 'feed'
+        ? feedProductLabelBox(Math.floor(i / 3), i % 3)
+        : productImageBox(Math.floor(i / 3), i % 3);
+      return Boolean(box && x >= box.x && x <= box.x + box.width && y >= box.y && y <= box.y + box.height);
     });
     if (index >= 0) {
       const product = selectedProducts[index];
@@ -265,7 +275,9 @@ export default function App() {
     }
 
     const imageIndex = selectedProducts.findIndex((_, i) => {
-      const box = productImageArea(Math.floor(i / 3), i % 3);
+      const box = cardFormat === 'feed'
+        ? feedProductImageArea(Math.floor(i / 3), i % 3)
+        : productImageArea(Math.floor(i / 3), i % 3);
       return Boolean(box && x >= box.x && x <= box.x + box.width && y >= box.y && y <= box.y + box.height);
     });
     if (imageIndex < 0) return;
@@ -478,7 +490,7 @@ export default function App() {
                 ))}
               </select>
               {cardFormat === 'feed' && (
-                <small className="format-hint">Feed automático: edição inline de nome e imagem fica desativada neste formato.</small>
+                <small className="format-hint">No Feed, clique no nome para editar ou na imagem para trocar o arquivo.</small>
               )}
             </label>
 
@@ -558,9 +570,15 @@ export default function App() {
                   if (e.key === 'Escape') setEditingLabel(null);
                 }}
                 style={{
-                  left: `${((productImageBox(editingLabel.row, editingLabel.column)?.x ?? 0) + 8) / POSTER_WIDTH * 100}%`,
-                  top: `${((productImageBox(editingLabel.row, editingLabel.column)?.y ?? 0) + 8) / POSTER_HEIGHT * 100}%`,
-                  width: `${((productImageBox(editingLabel.row, editingLabel.column)?.width ?? 0) - 16) / POSTER_WIDTH * 100}%`,
+                  left: `${((cardFormat === 'feed'
+                    ? feedProductLabelBox(editingLabel.row, editingLabel.column)
+                    : productImageBox(editingLabel.row, editingLabel.column))?.x ?? 0) / canvasWidthForFormat(cardFormat) * 100}%`,
+                  top: `${((cardFormat === 'feed'
+                    ? feedProductLabelBox(editingLabel.row, editingLabel.column)
+                    : productImageBox(editingLabel.row, editingLabel.column))?.y ?? 0) / canvasHeightForFormat(cardFormat) * 100}%`,
+                  width: `${((cardFormat === 'feed'
+                    ? feedProductLabelBox(editingLabel.row, editingLabel.column)
+                    : productImageBox(editingLabel.row, editingLabel.column))?.width ?? 0) / canvasWidthForFormat(cardFormat) * 100}%`,
                 }}
               />
             )}
@@ -627,4 +645,12 @@ function normalizeSearch(value: string | undefined): string {
     .toLocaleLowerCase()
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '');
+}
+
+function canvasWidthForFormat(format: CardFormat): number {
+  return format === 'feed' ? FEED_TEMPLATE_WIDTH : POSTER_WIDTH;
+}
+
+function canvasHeightForFormat(format: CardFormat): number {
+  return format === 'feed' ? FEED_TEMPLATE_HEIGHT : POSTER_HEIGHT;
 }
