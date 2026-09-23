@@ -99,10 +99,7 @@ function drawFeedProducts(
 
   const validity = formatCampaignValidity(card.campaign.dataInicio, card.campaign.dataFim);
   if (validity) {
-    ctx.fillStyle = '#ffffff';
-    ctx.font = '700 14px Poppins, sans-serif';
-    ctx.textAlign = 'center';
-    ctx.fillText(validity, 520, 920);
+    drawValidityWithinBox(ctx, validity, { x: 430, y: 888, width: 180, height: 38 }, 14);
   }
 }
 
@@ -139,15 +136,29 @@ function drawFeedPrice(
   ctx.fillText(`,${cents ?? '00'}`, x + wholeWidth + 2, y - 7);
 }
 
+function drawValidityWithinBox(
+  ctx: CanvasRenderingContext2D,
+  validity: string,
+  box: { x: number; y: number; width: number; height: number },
+  fontSize: number,
+): void {
+  ctx.save();
+  ctx.beginPath();
+  ctx.rect(box.x, box.y, box.width, box.height);
+  ctx.clip();
+  ctx.fillStyle = '#ffffff';
+  ctx.font = `700 ${fontSize}px Poppins, sans-serif`;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(fitText(ctx, validity, box.width - 8), box.x + box.width / 2, box.y + box.height / 2);
+  ctx.restore();
+}
+
 function drawCampaignValidity(ctx: CanvasRenderingContext2D, campaign: Campaign): void {
   const validity = formatCampaignValidity(campaign.dataInicio, campaign.dataFim);
   if (!validity) return;
 
-  ctx.fillStyle = '#ffffff';
-  ctx.font = '700 22px Poppins, sans-serif';
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'alphabetic';
-  ctx.fillText(validity, 625, 1598);
+  drawValidityWithinBox(ctx, validity, { x: 500, y: 1572, width: 250, height: 48 }, 22);
 }
 
 function formatCampaignValidity(startDate: string, endDate: string): string {
