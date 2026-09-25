@@ -12,6 +12,7 @@ export interface ImportRow {
   nome: string;
   precos: Partial<Record<StoreCode, StorePrice>>;
   unidade?: string;
+  codigoBarras?: string;
   erros: string[];
 }
 

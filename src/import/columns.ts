@@ -26,16 +26,16 @@ export const PRICE_COLUMNS: { kind: ColKind; store: StoreCode; field: 'preco' | 
 ];
 
 const ALIASES: Record<ColKind, string[]> = {
-  produto: ['produto', 'nome', 'descricao', 'item'],
-  loja2: ['loja 2', 'loja 02', 'loja2', 'preco loja 2', 'preco loja2', 'preco loja 02', 'preco l2'],
-  cvL2: ['cv l2', 'cv l 2', 'cv loja 2', 'cvloja2', 'clube de vantagens loja 2', 'clube loja 2'],
-  matriz: ['matriz', 'preco matriz', 'loja matriz', 'preco da loja matriz', 'loja 1'],
-  cvM: ['cv m', 'cv m.', 'cv matriz', 'cv m matriz', 'clube de vantagens matriz', 'clube matriz'],
-  summit: ['summit', 'preco summit', 'loja summit', 'preco loja summit', 'loja 3'],
-  cvS: ['cv s', 'cv s.', 'cv summit', 'cv s summit', 'clube de vantagens summit', 'clube summit'],
+  produto: ['produto', 'produto ativos', 'nome', 'descricao', 'item'],
+  loja2: ['loja 2', 'loja 02', 'loja2', 'encarte filial 01', 'preco loja 2', 'preco loja2', 'preco loja 02', 'preco l2'],
+  cvL2: ['cv l2', 'cv l 2', 'cv loja 2', 'cvloja2', 'c vantagens', 'c vantagens'],
+  matriz: ['matriz', 'encarte matriz', 'preco matriz', 'loja matriz', 'preco da loja matriz', 'loja 1'],
+  cvM: ['cv m', 'cv m.', 'cv matriz', 'cv m matriz', 'c vantagens', 'clube de vantagens matriz', 'clube matriz'],
+  summit: ['summit', 'encarte summit loja 3', 'preco summit', 'loja summit', 'preco loja summit', 'loja 3'],
+  cvS: ['cv s', 'cv s.', 'cv summit', 'cv s summit', 'c vantagens', 'clube de vantagens summit', 'clube summit'],
   unidade: ['unidade', 'und'],
   codInt: ['cod int', 'cod. int', 'cod. int.', 'codint', 'codigo interno', 'cod interna'],
-  codigo: ['codigo', 'cod. de barras', 'codigo de barras', 'cod. barras', 'ean'],
+  codigo: ['codigo', 'cod', 'cod. de barras', 'codigo de barras', 'cod. barras', 'ean'],
 };
 
 export interface ColumnMap {
@@ -61,8 +61,10 @@ export function findHeaderMap(headers: unknown[]): Map<ColKind, number> | null {
     const aliases = ALIASES[kind].map(normalizeText);
     const index = normalized.findIndex((text) => {
       if (!text) return false;
-      const soft = text.replace(/[./]/g, ' ');
-      return aliases.includes(soft) || aliases.includes(text);
+      const soft = text.replace(/[./()]/g, ' ').replace(/\s+/g, ' ').trim();
+      return aliases.includes(soft) || aliases.includes(text) || (
+        kind === 'produto' && text.startsWith('produto ativos')
+      );
     });
     if (index >= 0) map.set(kind, index);
   }

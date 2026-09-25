@@ -148,6 +148,7 @@ describe('buildPdfResult', () => {
     expect(row.precos.loja2).toEqual({ preco: 4.29, cv: 3.89 });
     expect(row.precos.matriz).toEqual({ preco: 4.19, cv: 3.99 });
     expect(row.precos.summit).toEqual({ preco: 4.19, cv: 3.99 });
+    expect(row.codigoBarras).toBe('7898213390031');
     expect(row.erros).toEqual([]);
   });
 

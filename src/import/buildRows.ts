@@ -19,6 +19,7 @@ function buildRow(header: Map<ColKind, number>, row: SourceRow): ImportRow {
   const erros: string[] = [];
   const nome = String(cellAt(row.cells, header.get('produto')) ?? '').trim();
   const unidade = suggestUnit(cellAt(row.cells, header.get('unidade')));
+  const codigoBarras = String(cellAt(row.cells, header.get('codigo')) ?? '').trim() || undefined;
 
   const precos: ImportRow['precos'] = {};
   for (const item of PRICE_COLUMNS) {
@@ -45,6 +46,7 @@ function buildRow(header: Map<ColKind, number>, row: SourceRow): ImportRow {
     nome,
     precos,
     unidade: unidade ?? undefined,
+    codigoBarras,
     erros,
   };
 }

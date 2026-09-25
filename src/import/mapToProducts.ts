@@ -8,6 +8,7 @@ export function rowToProductInput(row: ImportRow): ProductInput {
     precos: row.precos,
     unidade: row.unidade ?? 'KG',
     categoria: '',
+    codigoBarras: row.codigoBarras,
     imagem: generatePlaceholderImage(row.nome),
     ativo: true,
   };

@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { STORE_LABELS, STORES, type Product, type ProductInput, type StoreCode } from '../../domain/product';
-import { fileToDataUrl, generatePlaceholderImage } from '../../utils/image';
+import { generatePlaceholderImage } from '../../utils/image';
 import { parsePrice } from '../../utils/parse';
+import { searchProductImages, uploadProductImage } from '../../utils/cloudinary';
 
 interface ProductFormProps {
   product: Product | null;
@@ -22,9 +23,14 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
   const [nome, setNome] = useState(product?.nome ?? '');
   const [unidade, setUnidade] = useState(product?.unidade ?? 'KG');
   const [categoria, setCategoria] = useState(product?.categoria ?? '');
+  const [codigoBarras, setCodigoBarras] = useState(product?.codigoBarras ?? '');
   const [ativo, setAtivo] = useState(product?.ativo ?? true);
   const [imagem, setImagem] = useState(product?.imagem ?? '');
   const [preview, setPreview] = useState(product?.imagem ?? '');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [searchResults, setSearchResults] = useState<string[]>([]);
+  const [searching, setSearching] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const [precos, setPrecos] = useState<Record<StoreCode, PrecoState>>(() => {
     const init: Record<StoreCode, PrecoState> = {
       matriz: { preco: '', cv: '' },
@@ -48,10 +54,16 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
 
   function handleImageFile(file: File | undefined) {
     if (!file) return;
-    fileToDataUrl(file).then((dataUrl) => {
-      setImagem(dataUrl);
-      setPreview(dataUrl);
-    });
+    setUploading(true);
+    uploadProductImage(file)
+      .then((url) => { setImagem(url); setPreview(url); })
+      .finally(() => setUploading(false));
+  }
+
+  async function handleSearch() {
+    setSearching(true);
+    try { setSearchResults(await searchProductImages(searchTerm)); }
+    finally { setSearching(false); }
   }
 
   const hasAnyPrice = STORES.some(
@@ -72,6 +84,7 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
       precos: built,
       unidade: unidade.trim().toUpperCase(),
       categoria: categoria.trim(),
+      codigoBarras: codigoBarras.trim() || undefined,
       ativo,
       imagem,
     });
@@ -96,6 +109,11 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
           <input value={categoria} onChange={(e) => setCategoria(e.target.value)} placeholder="Ex.: Bovinos" />
         </label>
       </div>
+
+      <label className="field">
+        <span>Código de barras / EAN</span>
+        <input value={codigoBarras} onChange={(e) => setCodigoBarras(e.target.value)} placeholder="Ex.: 7890000000000" inputMode="numeric" />
+      </label>
 
       <div className="store-prices">
         {STORES.map((store) => (
@@ -144,9 +162,26 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
               Gerar imagem de teste
             </button>
             <label className="btn ghost file">
-              Enviar arquivo
+              {uploading ? 'Enviando...' : 'Enviar arquivo'}
               <input type="file" accept="image/*" onChange={(e) => handleImageFile(e.target.files?.[0])} />
             </label>
+            <div className="image-search">
+              <input value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} placeholder="Buscar imagem..." />
+              <button type="button" className="btn ghost" onClick={handleSearch} disabled={searching}>
+                {searching ? 'Buscando...' : 'Buscar'}
+              </button>
+            </div>
+            {searchResults.length > 0 && (
+              <div className="image-results">
+                {searchResults.map((url) => (
+                  <button type="button" key={url} onClick={async () => {
+                    setUploading(true);
+                    try { const uploaded = await uploadProductImage(url); setImagem(uploaded); setPreview(uploaded); setSearchResults([]); }
+                    finally { setUploading(false); }
+                  }}><img src={url} alt="Resultado da busca" /></button>
+                ))}
+              </div>
+            )}
           </div>
         )}
       </div>

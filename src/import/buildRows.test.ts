@@ -22,6 +22,24 @@ function header(): Map<ColKind, number> {
 }
 
 describe('buildImportRows', () => {
+  it('reconhece o cabeçalho real da planilha do Cartaz Cloud', () => {
+    const map = findHeaderMap([
+      'PRODUTO ATIVOS ATÉ 19 05 26',
+      'ENCARTE/FILIAL 01',
+      'ENCARTE/ MATRIZ',
+      'ENCARTE/ SUMMIT (LOJA 3)',
+      'C. VANTAGENS',
+      'Produto',
+      'Cod',
+    ]);
+    expect(map).not.toBeNull();
+    expect(map?.get('produto')).toBe(0);
+    expect(map?.get('loja2')).toBe(1);
+    expect(map?.get('matriz')).toBe(2);
+    expect(map?.get('summit')).toBe(3);
+    expect(map?.get('codigo')).toBe(6);
+  });
+
   it('parseia preços e cv por loja', () => {
     const map = header();
     const rows = buildImportRows(map, [
@@ -32,6 +50,7 @@ describe('buildImportRows', () => {
     ]);
     expect(rows[0].nome).toBe('SUCO SALTON UVA TTO INTEGRAL 1,5');
     expect(rows[0].unidade).toBe('KG');
+    expect(rows[0].codigoBarras).toBe('789');
     expect(rows[0].precos.loja2).toEqual({ preco: 12.99, cv: 11.99 });
     expect(rows[0].precos.matriz).toEqual({ preco: 13.99, cv: 12.99 });
     expect(rows[0].precos.summit).toEqual({ preco: 14.99, cv: 13.99 });

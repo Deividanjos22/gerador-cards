@@ -15,7 +15,9 @@ import { ProductForm } from './ui/produtos/ProductForm';
 import { CampaignForm } from './ui/campanhas/CampaignForm';
 import { ImportPanel } from './ui/import/ImportPanel';
 import { formatPrice, formatDatePtBr, slugify } from './utils/format';
-import { fileToDataUrl } from './utils/image';
+import { uploadProductImage } from './utils/cloudinary';
+import { auth, db } from './firebase';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { CARD_FORMATS, type CardFormat, getCardFormat } from './generator/format';
 import {
   FEED_TEMPLATE_HEIGHT,
@@ -47,11 +49,121 @@ export default function App() {
   const [productSearch, setProductSearch] = useState('');
 
   const [busy, setBusy] = useState<'png' | 'jpg' | null>(null);
+  const [imageSyncStatus, setImageSyncStatus] = useState('');
   const [cardFormat, setCardFormat] = useState<CardFormat>('story');
   const [editingLabel, setEditingLabel] = useState<{ productId: string; row: number; column: number; value: string } | null>(null);
   const [editingImageProductId, setEditingImageProductId] = useState<string | null>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    const user = auth.currentUser;
+    if (!user) return;
+    getDoc(doc(db, 'clientes_encartes', 'COFRE_GLOBAL_FOTOS')).then((snapshot) => {
+      const cofre = snapshot.data() as Record<string, string> | undefined;
+      const hydrated = products.map((product) => {
+        const barcode = product.codigoBarras?.trim();
+        const name = product.nome.trim().toUpperCase();
+        const existingImage = product.imagem;
+        const isGeneratedPlaceholder = isPlaceholderImage(existingImage);
+        const sharedImage = findSharedImage(cofre, barcode, name);
+        if (sharedImage && (isGeneratedPlaceholder || !existingImage)) {
+          return { ...product, imagem: sharedImage };
+        }
+        return product;
+      });
+      if (hydrated.some((product, index) => product.imagem !== products[index]?.imagem)) {
+        hydrated.forEach((product) => productRepo.update(product));
+        setProducts(hydrated);
+      }
+    }).catch(() => undefined);
+  }, [products]);
+
+  function isPlaceholderImage(image: string | undefined): boolean {
+    return Boolean(image?.startsWith('data:image/'));
+  }
+
+  function normalizeImageKey(value: string | undefined): string {
+    return String(value ?? '').trim().toUpperCase().replace(/\s+/g, ' ');
+  }
+
+  function findSharedImage(
+    cofre: Record<string, string> | undefined,
+    barcode: string | undefined,
+    name: string,
+  ): string | undefined {
+    if (!cofre) return undefined;
+    const barcodeKey = normalizeImageKey(barcode);
+    const nameKey = normalizeImageKey(name);
+    if (barcodeKey && cofre[barcodeKey]) return cofre[barcodeKey];
+    if (nameKey && cofre[nameKey]) return cofre[nameKey];
+    const matchingKey = Object.keys(cofre).find((key) => {
+      const normalizedKey = normalizeImageKey(key);
+      return normalizedKey === barcodeKey || normalizedKey === nameKey;
+    });
+    return matchingKey ? cofre[matchingKey] : undefined;
+  }
+
+  function findLocalProductImage(barcode: string | undefined): Promise<string> {
+    const normalizedBarcode = barcode?.trim();
+    if (!normalizedBarcode) return Promise.resolve('');
+
+    const extensions = ['png', 'PNG', 'jpg', 'JPG', 'jpeg', 'JPEG', 'webp', 'WEBP'];
+    return new Promise((resolve) => {
+      let index = 0;
+      const tryNext = () => {
+        if (index >= extensions.length) {
+          resolve('');
+          return;
+        }
+        const url = `/fotos-produtos/${encodeURIComponent(normalizedBarcode)}.${extensions[index++]}`;
+        const image = new Image();
+        image.onload = () => resolve(url);
+        image.onerror = tryNext;
+        image.src = url;
+      };
+      tryNext();
+    });
+  }
+
+  async function pullProductImages(source: 'cloud' | 'local') {
+    setImageSyncStatus(source === 'cloud' ? 'Buscando fotos no Cloudinary...' : 'Buscando fotos locais...');
+    try {
+      const snapshot = await getDoc(doc(db, 'clientes_encartes', 'COFRE_GLOBAL_FOTOS'));
+      const cofre = snapshot.data() as Record<string, string> | undefined;
+      const hydrated = await Promise.all(products.map(async (product) => {
+        const barcode = product.codigoBarras?.trim();
+        const name = product.nome.trim().toUpperCase();
+        const sharedImage = findSharedImage(cofre, barcode, name);
+        if (source === 'cloud' && sharedImage && (!product.imagem || isPlaceholderImage(product.imagem))) {
+          return { product: { ...product, imagem: sharedImage }, source: 'cloud' as const };
+        }
+        if (source === 'local' && (!product.imagem || isPlaceholderImage(product.imagem)) && barcode) {
+          const localImage = await findLocalProductImage(barcode);
+          if (localImage) return { product: { ...product, imagem: localImage }, source: 'local' as const };
+        }
+        return { product, source: '' as const };
+      }));
+
+      const updatedProducts = hydrated.filter(({ source }) => source !== '').map(({ product }) => product);
+      updatedProducts.forEach((product) => productRepo.update(product));
+      if (updatedProducts.length > 0) setProducts(productRepo.list());
+
+      const cloudCount = hydrated.filter(({ source }) => source === 'cloud').length;
+      const localCount = hydrated.filter(({ source }) => source === 'local').length;
+      if (cloudCount === 0 && localCount === 0) {
+        setImageSyncStatus('Nenhuma foto compatível foi encontrada.');
+        return;
+      }
+      const parts = [];
+      if (cloudCount > 0) parts.push(`${cloudCount} do Cloudinary`);
+      if (localCount > 0) parts.push(`${localCount} local(is)`);
+      setImageSyncStatus(`Fotos vinculadas: ${parts.join(' e ')}.`);
+    } catch (error) {
+      console.error('Falha ao puxar imagens do catálogo.', error);
+      setImageSyncStatus('Não foi possível puxar as imagens.');
+    }
+  }
 
   const activeProducts = useMemo(() => products.filter((p) => p.ativo), [products]);
   const productCategories = useMemo(
@@ -134,6 +246,10 @@ export default function App() {
       productRepo.create(input);
     }
     setProducts(productRepo.list());
+    if (input.imagem) {
+      const keys = [input.codigoBarras?.trim(), input.nome.trim().toUpperCase()].filter((key): key is string => Boolean(key));
+      void setDoc(doc(db, 'clientes_encartes', 'COFRE_GLOBAL_FOTOS'), Object.fromEntries(keys.map((key) => [key, input.imagem])), { merge: true });
+    }
     closeProductForm();
   }
 
@@ -296,11 +412,14 @@ export default function App() {
   function handleProductImageChange(file: File | undefined) {
     if (!file || !editingImageProductId) return;
     if (!file.type.startsWith('image/')) return;
-    fileToDataUrl(file)
-      .then((image) => {
+    uploadProductImage(file)
+      .then(async (image) => {
         const product = products.find((item) => item.id === editingImageProductId);
         if (!product) return;
         productRepo.update({ ...product, imagem: image });
+        const barcode = product.codigoBarras?.trim();
+        const keys = [barcode, product.nome.trim().toUpperCase()].filter((key): key is string => Boolean(key));
+        await setDoc(doc(db, 'clientes_encartes', 'COFRE_GLOBAL_FOTOS'), Object.fromEntries(keys.map((key) => [key, image])), { merge: true });
         setProducts(productRepo.list());
         setEditingImageProductId(null);
       })
@@ -361,6 +480,12 @@ export default function App() {
             <div className="panel-head">
               <h2>Produtos</h2>
               <div className="panel-head-actions">
+                <button type="button" className="btn ghost sm" onClick={() => pullProductImages('cloud')}>
+                  Puxar Cloudinary
+                </button>
+                <button type="button" className="btn ghost sm" onClick={() => pullProductImages('local')}>
+                  Puxar fotos locais
+                </button>
                 <button type="button" className="btn ghost sm" onClick={startImport}>
                   Importar lista
                 </button>
@@ -392,6 +517,7 @@ export default function App() {
                     ))}
                   </select>
                 </div>
+                {imageSyncStatus && <p className="hint">{imageSyncStatus}</p>}
                 <ul className="item-list product-page-list">
                 {filteredProducts.map((product) => (
                   <li key={product.id} className={`item${product.ativo ? '' : ' inactive'}`}>

@@ -2,6 +2,32 @@
 /* Layout geral                                                         */
 /* ------------------------------------------------------------------ */
 
+.auth-screen {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  background: #eef4ff;
+  padding: 24px;
+}
+
+.auth-card {
+  width: min(100%, 420px);
+  display: grid;
+  gap: 14px;
+  padding: 32px;
+  border-radius: 18px;
+  background: #fff;
+  box-shadow: 0 18px 50px #123a681f;
+}
+
+.auth-card h1 { margin: 0; color: #123a68; }
+.auth-card p { margin: 0 0 8px; color: #64748b; }
+.auth-card label { display: grid; gap: 6px; color: #334155; font-weight: 700; font-size: 14px; }
+.auth-card input { border: 1px solid #cbd5e1; border-radius: 8px; padding: 11px 12px; font: inherit; }
+.auth-card button { border: 0; border-radius: 8px; padding: 12px; color: #fff; background: #2563eb; font-weight: 800; cursor: pointer; }
+.auth-card button:disabled { opacity: .65; cursor: wait; }
+.auth-error { padding: 10px; border: 1px solid #fecaca; border-radius: 8px; color: #b91c1c; background: #fef2f2; font-size: 14px; }
+
 .app {
   max-width: 1240px;
   margin: 0 auto;
@@ -220,6 +246,42 @@
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 12px;
+}
+
+.image-search {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.image-search input {
+  min-width: 0;
+  flex: 1;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+
+.image-results {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.image-results button {
+  min-height: 72px;
+  padding: 4px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface-2);
+  cursor: pointer;
+}
+
+.image-results img {
+  width: 100%;
+  height: 72px;
+  object-fit: contain;
 }
 
 .store-prices {

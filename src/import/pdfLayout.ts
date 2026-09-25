@@ -229,6 +229,7 @@ export function buildRowsFromLines(
 
 function candidateFromLine(line: PdfWord[], layout: PdfLayout): Candidate {
   const nomeParts: string[] = [];
+  const codeParts: string[] = [];
   const cellTexts = new Map<string, string>();
   let hasValues = false;
 
@@ -243,6 +244,7 @@ function candidateFromLine(line: PdfWord[], layout: PdfLayout): Candidate {
     }
     if (region === 'code') {
       hasValues = true;
+      codeParts.push(text);
       return;
     }
     const col = layout.columns[region];
@@ -272,6 +274,10 @@ function candidateFromLine(line: PdfWord[], layout: PdfLayout): Candidate {
     if (text) cells[KIND_INDEX[COLUMN_KIND[`${col.store}\u0000${col.field}`]]] = text;
   });
   if (unidade) cells[KIND_INDEX.unidade] = unidade;
+  if (codeParts.length > 0) {
+    cells[KIND_INDEX.codInt] = codeParts.length > 1 ? codeParts[0] : '';
+    cells[KIND_INDEX.codigo] = codeParts[codeParts.length - 1];
+  }
   cells[KIND_INDEX.produto] = finalNome;
 
   return { nome: finalNome, unidade, cells, hasValues };

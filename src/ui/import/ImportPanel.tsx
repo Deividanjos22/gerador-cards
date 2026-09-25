@@ -13,13 +13,14 @@ interface ImportPanelProps {
 interface RowEdit {
   index: number;
   nome: string;
+  codigoBarras?: string;
   unidade: string;
   precos: Record<StoreCode, { preco: string; cv: string }>;
   erros: string[];
 }
 
-function rowToEdit(index: number, nome: string, unidade: string | undefined, precos: RowEdit['precos'], erros: string[]): RowEdit {
-  return { index, nome, unidade: unidade ?? 'KG', precos, erros };
+function rowToEdit(index: number, nome: string, codigoBarras: string | undefined, unidade: string | undefined, precos: RowEdit['precos'], erros: string[]): RowEdit {
+  return { index, nome, codigoBarras, unidade: unidade ?? 'KG', precos, erros };
 }
 
 export function ImportPanel({ onImport, onClose }: ImportPanelProps) {
@@ -42,6 +43,7 @@ export function ImportPanel({ onImport, onClose }: ImportPanelProps) {
             rowToEdit(
               row.index,
               row.nome,
+              row.codigoBarras,
               row.unidade,
               {
                 matriz: { preco: priceToInput(row.precos.matriz?.preco), cv: priceToInput(row.precos.matriz?.cv) },
@@ -163,6 +165,7 @@ export function ImportPanel({ onImport, onClose }: ImportPanelProps) {
                   ))}
                   <th>Un.</th>
                   <th className="import-errors">Observações</th>
+                  <th>Código de barras / EAN</th>
                 </tr>
               </thead>
               <tbody>
@@ -193,6 +196,16 @@ export function ImportPanel({ onImport, onClose }: ImportPanelProps) {
                       <input className="import-unit" value={row.unidade} onChange={(e) => setUnidade(i, e.target.value)} />
                     </td>
                     <td className="import-errors" />
+                    <td>
+                      <input
+                        value={row.codigoBarras ?? ''}
+                        onChange={(e) => setRows((prev) => prev.map((item, idx) => (
+                          idx === i ? { ...item, codigoBarras: e.target.value } : item
+                        )))}
+                        placeholder="Não informado"
+                        inputMode="numeric"
+                      />
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -228,6 +241,7 @@ function editToInput(row: RowEdit): ProductInput {
     precos,
     unidade: row.unidade.trim().toUpperCase() || 'KG',
     categoria: '',
+    codigoBarras: row.codigoBarras,
     imagem: generatePlaceholderImage(row.nome),
     ativo: true,
   };

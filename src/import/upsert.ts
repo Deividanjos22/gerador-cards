@@ -24,6 +24,8 @@ export function upsertProducts(
         ...match,
         precos: mergeWithExistingPrecos(match.precos, input.precos),
         unidade: input.unidade || match.unidade,
+        codigoBarras: input.codigoBarras || match.codigoBarras,
+        imagem: match.imagem || input.imagem,
         ativo: true,
       });
       updated += 1;
@@ -36,6 +38,7 @@ export function upsertProducts(
       unidade: input.unidade || 'KG',
       categoria: input.categoria,
       imagem: input.imagem,
+      codigoBarras: input.codigoBarras,
       ativo: true,
     });
     byKey.set(key, createdProduct);

@@ -20,6 +20,7 @@ export interface Product {
   unidade: string;
   categoria?: string;
   imagem?: string;
+  codigoBarras?: string;
   ativo: boolean;
 }
 
