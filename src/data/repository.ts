@@ -4,6 +4,7 @@ import type { Theme } from '../generator/theme';
 
 export interface ProductRepository {
   list(): Product[];
+  clear(): void;
   create(input: ProductInput): Product;
   update(product: Product): Product;
   remove(id: string): void;

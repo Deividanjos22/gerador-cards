@@ -49,6 +49,10 @@ export class LocalStorageProductRepository implements ProductRepository {
     return readAll();
   }
 
+  clear(): void {
+    writeAll([]);
+  }
+
   create(input: ProductInput): Product {
     const items = readAll();
     const product: Product = { ...input, id: crypto.randomUUID() };

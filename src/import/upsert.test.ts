@@ -10,6 +10,10 @@ class Memoria implements ProductRepository {
     return [...this.items];
   }
 
+  clear(): void {
+    this.items = [];
+  }
+
   create(input: ProductInput): Product {
     const product: Product = { id: String(this.items.length + 1), ...input, precos: input.precos };
     this.items.push(product);

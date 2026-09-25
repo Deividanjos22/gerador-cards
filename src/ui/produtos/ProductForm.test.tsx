@@ -3,6 +3,12 @@ import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import { ProductForm } from './ProductForm';
 import { type Product } from '../../domain/product';
+import { searchProductImages } from '../../utils/cloudinary';
+
+vi.mock('../../utils/cloudinary', () => ({
+  searchProductImages: vi.fn(),
+  uploadProductImage: vi.fn(),
+}));
 
 const picanha: Product = {
   id: 'p1',
@@ -73,5 +79,20 @@ describe('ProductForm', () => {
     await user.click(screen.getByRole('button', { name: 'Cancelar' }));
 
     expect(onCancel).toHaveBeenCalledTimes(1);
+  });
+
+  it('mostra o erro retornado quando a busca de imagens falha', async () => {
+    const user = userEvent.setup();
+    vi.mocked(searchProductImages).mockRejectedValueOnce(
+      new Error('This project does not have the access to Custom Search JSON API.'),
+    );
+    renderForm();
+
+    await user.type(screen.getByPlaceholderText('Buscar imagem...'), 'Arroz');
+    await user.click(screen.getByRole('button', { name: 'Buscar' }));
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'This project does not have the access to Custom Search JSON API.',
+    );
   });
 });

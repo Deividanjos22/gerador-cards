@@ -100,8 +100,7 @@ export function ImportPanel({ onImport, onClose }: ImportPanelProps) {
       <section className="panel import-panel">
         <h2>Importação concluída</h2>
         <ul className="import-summary">
-          <li>{summary.created} produto(s) novo(s) adicionado(s).</li>
-          <li>{summary.updated} produto(s) já cadastrado(s) com os preços atualizados.</li>
+          <li>{summary.created + summary.updated} produto(s) importado(s); a lista anterior foi substituída.</li>
           {summary.semPreco > 0 && <li>{summary.semPreco} produto(s) importado(s) sem preço.</li>}
         </ul>
         <div className="actions">
@@ -151,7 +150,7 @@ export function ImportPanel({ onImport, onClose }: ImportPanelProps) {
       {result && result.rows.length > 0 && (
         <>
           <p className="ok-hint">
-            Confira os dados antes de importar. Linhas marcadas atualizam preços de produtos com o mesmo nome.
+            Ao confirmar, a lista atual de produtos será apagada e substituída pelos produtos selecionados abaixo.
           </p>
 
           <div className="import-table-wrap">

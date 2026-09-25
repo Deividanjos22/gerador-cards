@@ -277,6 +277,20 @@ export default function App() {
   }
 
   function handleImport(inputs: ProductInput[]): ImportSummary {
+    productRepo.clear();
+    setSelectedProductIds([]);
+    const updatedCampaigns = campaigns.map((campaign) => {
+      if (campaign.produtoIds.length === 0 && !campaign.nomesProdutos) return campaign;
+      const updated: Campaign = {
+        ...campaign,
+        produtoIds: [],
+        nomesProdutos: undefined,
+      };
+      campaignRepo.update(updated);
+      return updated;
+    });
+    setCampaigns(updatedCampaigns);
+
     const summary = upsertProducts(productRepo, inputs);
     setProducts(productRepo.list());
     return summary;

@@ -29,6 +29,7 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
   const [preview, setPreview] = useState(product?.imagem ?? '');
   const [searchTerm, setSearchTerm] = useState('');
   const [searchResults, setSearchResults] = useState<string[]>([]);
+  const [searchError, setSearchError] = useState('');
   const [searching, setSearching] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [precos, setPrecos] = useState<Record<StoreCode, PrecoState>>(() => {
@@ -61,8 +62,20 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
   }
 
   async function handleSearch() {
+    setSearchError('');
+    setSearchResults([]);
+    if (!searchTerm.trim()) {
+      setSearchError('Digite o nome do produto para buscar imagens.');
+      return;
+    }
     setSearching(true);
-    try { setSearchResults(await searchProductImages(searchTerm)); }
+    try {
+      const results = await searchProductImages(searchTerm);
+      setSearchResults(results);
+      if (results.length === 0) setSearchError('Nenhuma imagem encontrada para essa busca.');
+    } catch (error) {
+      setSearchError(error instanceof Error ? error.message : 'Não foi possível buscar imagens.');
+    }
     finally { setSearching(false); }
   }
 
@@ -166,11 +179,12 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
               <input type="file" accept="image/*" onChange={(e) => handleImageFile(e.target.files?.[0])} />
             </label>
             <div className="image-search">
-              <input value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} placeholder="Buscar imagem..." />
+              <input value={searchTerm} onChange={(e) => { setSearchTerm(e.target.value); setSearchError(''); }} placeholder="Buscar imagem..." />
               <button type="button" className="btn ghost" onClick={handleSearch} disabled={searching}>
                 {searching ? 'Buscando...' : 'Buscar'}
               </button>
             </div>
+            {searchError && <span className="hint-error" role="alert">{searchError}</span>}
             {searchResults.length > 0 && (
               <div className="image-results">
                 {searchResults.map((url) => (
